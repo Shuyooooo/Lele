@@ -47,7 +47,7 @@ export class MemoryBedroom extends Phaser.Scene
 
 		// 电脑（占位热区）：点击后返回 Night
 		const DEFAULT_COMPUTER_X = 785;
-		const DEFAULT_COMPUTER_Y = 461;
+		const DEFAULT_COMPUTER_Y = 460;
 		const savedComputerX = Number.parseFloat(window?.localStorage?.getItem?.('memory.computerX') ?? '');
 		const savedComputerY = Number.parseFloat(window?.localStorage?.getItem?.('memory.computerY') ?? '');
 

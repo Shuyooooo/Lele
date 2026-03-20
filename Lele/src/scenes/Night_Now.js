@@ -23,9 +23,12 @@ export class Night extends Phaser.Scene
 	preload()
 	{
 		this.load.image('night-bg', 'assets/NightBedroom/bg.png');
+		this.load.image('night-lamp-room', 'assets/NightBedroom/normal_light.png');
 		this.load.image('night-computer', 'assets/NightBedroom/Object/Computer.png');
 		this.load.image('lamp-big', 'assets/NightBedroom/Light/lamp_big.png');
 		this.load.image('lamp-tomb', 'assets/NightBedroom/Light/lamp_tomb.jpg');
+		this.load.image('lamp-live-snail-1', 'assets/NightBedroom/Light/lamp_live_snail_1.png');
+		this.load.image('lamp-live-snail', 'assets/NightBedroom/Light/lamp_live_snail.png');
 	}
 
 	create()
@@ -48,13 +51,14 @@ export class Night extends Phaser.Scene
 		// 状态变量控制台灯交互
 		let showLampBig = false;
 		let showLampTomb = false;
+		let liveSnailStage = 0;
 
 		// 创建 lamp_big 图片（初始隐藏）
 		const lampBig = this.add.image(width / 2, height / 2, 'lamp-big');
 		lampBig.setOrigin(0.5);
 		lampBig.setScale(scale * 1.2); // 适当放大显示
 		lampBig.setVisible(false);
-		lampBig.setInteractive({ useHandCursor: true });
+		lampBig.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
 		lampBig.setDepth(9500); // 设置更高的深度，确保在最上层
 
 		// 创建 lamp_tomb 图片（初始隐藏）
@@ -62,8 +66,28 @@ export class Night extends Phaser.Scene
 		lampTomb.setOrigin(0.5);
 		lampTomb.setScale(scale * 1.5); // 适当放大显示
 		lampTomb.setVisible(false);
-		lampTomb.setInteractive({ useHandCursor: true });
+		lampTomb.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
 		lampTomb.setDepth(9500); // 设置更高的深度，确保在最上层
+
+		// 砸壳完成后使用的台灯两阶段表现
+		const lampOverlayBg = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 1);
+		lampOverlayBg.setOrigin(0.5);
+		lampOverlayBg.setVisible(false);
+		lampOverlayBg.setDepth(9490);
+
+		const lampLiveSnail1 = this.add.image(width / 2, height / 2, 'lamp-live-snail-1');
+		lampLiveSnail1.setOrigin(0.5);
+		lampLiveSnail1.setScale(scale * 1.5);
+		lampLiveSnail1.setVisible(false);
+		lampLiveSnail1.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
+		lampLiveSnail1.setDepth(9500);
+
+		const lampLiveSnail = this.add.image(width / 2, height / 2, 'lamp-live-snail');
+		lampLiveSnail.setOrigin(0.5);
+		lampLiveSnail.setScale(scale * 1.5);
+		lampLiveSnail.setVisible(false);
+		lampLiveSnail.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
+		lampLiveSnail.setDepth(9500);
 
 		const darkness = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, broken ? 0.22 : 0.55).setOrigin(0.5);
 		darkness.setDepth(9000);
@@ -121,7 +145,7 @@ export class Night extends Phaser.Scene
 		computer.setOrigin(0.5, getVisualBottomOriginY('night-computer'));
 		computer.setScale(scale);
 		computer.setAlpha(0.8);
-		computer.setInteractive({ useHandCursor: true });
+		computer.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
 
 		// 台灯（占位热区，后续替换素材时可微调坐标）
 		const DEFAULT_LAMP_X = 860;
@@ -132,9 +156,12 @@ export class Night extends Phaser.Scene
 		let lampX = Number.isFinite(savedLampX) ? savedLampX : DEFAULT_LAMP_X;
 		let lampY = Number.isFinite(savedLampY) ? savedLampY : DEFAULT_LAMP_Y;
 
-		const lampHit = this.add.rectangle(bgLeft + lampX * scale, bgTop + lampY * scale, 180 * scale, 180 * scale, 0xffff00, 0);
-		lampHit.setOrigin(0.5);
-		lampHit.setInteractive({ useHandCursor: true });
+		// 房间内台灯：用独立贴图做命中，仅非透明像素可点（与背景台灯对齐，本体不可见）
+		const lampHit = this.add.image(bgLeft + lampX * scale, bgTop + lampY * scale, 'night-lamp-room');
+		lampHit.setOrigin(0.5, getVisualBottomOriginY('night-lamp-room'));
+		lampHit.setScale(scale);
+		lampHit.setAlpha(0);
+		lampHit.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 1 });
 
 		// 调试用：按 D 显示/隐藏锚点十字
 		const debug =
@@ -251,19 +278,43 @@ export class Night extends Phaser.Scene
 			{
 				this.scene.start('MemoryBedroom');
 			}
-			else if (gameObject === lampHit && !showLampBig && !showLampTomb)
+			else if (broken && (gameObject === lampHit || gameObject === lampLiveSnail1 || gameObject === lampLiveSnail))
+			{
+				if (liveSnailStage === 0)
+				{
+					liveSnailStage = 1;
+					lampOverlayBg.setVisible(true);
+					lampLiveSnail1.setVisible(true);
+					lampLiveSnail.setVisible(false);
+				}
+				else if (liveSnailStage === 1)
+				{
+					liveSnailStage = 2;
+					lampLiveSnail1.setVisible(false);
+					lampLiveSnail.setVisible(true);
+				}
+				else
+				{
+					// 第三次点击：关闭覆盖层，回到 Night 当前画面
+					liveSnailStage = 0;
+					lampOverlayBg.setVisible(false);
+					lampLiveSnail1.setVisible(false);
+					lampLiveSnail.setVisible(false);
+				}
+			}
+			else if (!broken && gameObject === lampHit && !showLampBig && !showLampTomb)
 			{
 				// 点击台灯热区，显示 lamp_big
 				showLampBig = true;
 				lampBig.setVisible(true);
 			}
-			else if (gameObject === lampBig && showLampBig && !showLampTomb)
+			else if (!broken && gameObject === lampBig && showLampBig && !showLampTomb)
 			{
 				// 点击 lamp_big，显示 lamp_tomb
 				showLampTomb = true;
 				lampTomb.setVisible(true);
 			}
-			else if ((gameObject === lampTomb || gameObject === lampBig) && showLampTomb)
+			else if (!broken && (gameObject === lampTomb || gameObject === lampBig) && showLampTomb)
 			{
 				// 点击 lamp_tomb 或 lamp_big，返回 Night 场景（清除显示）
 				showLampBig = false;

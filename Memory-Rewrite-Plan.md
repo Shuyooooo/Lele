@@ -19,7 +19,7 @@
 
 ## ✦ 当前实现快照（第一阶段）
 
-更新时间：2026-03-17
+更新时间：2026-03-19
 
 ### ✅ 已实现
 
@@ -27,15 +27,38 @@
 - 场景切换链路可用：`Night -> MemoryBedroom -> SnailDemoPast -> Night`
 - Night 场景有两个入口热区：
   - 点击电脑进入 `MemoryBedroom`
-  - 点击台灯进入 `SnailDemoPresent`
+  - 点击台灯进入台灯交互（`lamp_big` / `lamp_tomb` 的展示逻辑）
+- MemoryBedroom 场景当前入口分工：
+  - 点击台灯进入 `SnailDemoPast`（砸壳流程入口）
+  - 点击电脑返回 `Night`
 - Snail Demo 核心谜题闭环已打通：
   - Past 中点击蜗牛壳累计命中（3 次）
   - 命中完成后写入状态：`snailShellBroken = true`
-  - 返回后 Present/Night 根据状态展示不同光照和对象表现
+  - 完成后自动返回 `Night`，并在 Night 使用更亮光照反馈变化
 - 全局状态已落在 registry：
   - `snailShellBroken`
   - `snailShellHitCount`
 - 为美术对位准备了调试能力（锚点十字、键盘微调、localStorage 保存坐标）
+
+### 🧩 当前流程与实现框架（简版）
+
+```text
+Night（现在）
+  -> 点击电脑
+MemoryBedroom（记忆卧室）
+  -> 点击台灯
+SnailDemoPast（过去：砸壳）
+  -> 命中蜗牛壳 3 次
+  -> 写入 registry: snailShellBroken=true
+  -> 自动返回 Night
+Night（现在反馈）
+  -> 根据 snailShellBroken 调整光照/表现
+```
+
+- 状态层：统一用 Phaser `registry` 跨场景传递与持久化本轮流程结果。
+- 交互层：使用可交互热区（`setInteractive` + `pointer/gameobjectdown`）驱动场景切换与行为触发。
+- 反馈层：使用明暗变化、对象可见性变化和轻量 tween（晃动）传达“修改过去 -> 现在变化”。
+- 调试层：通过键盘微调与 localStorage 保存坐标，用于快速对位后续美术资源。
 
 ### ⚠️ 仍待补齐（第一阶段口径）
 
