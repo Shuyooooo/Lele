@@ -1,0 +1,31 @@
+{
+    "nightBedroom": {
+      "background": {
+        "xPercent": 40,
+        "yPercent": 50,
+        "scalePercent": 96
+      },
+      "computer": {
+        "xPercent": 56,
+        "yPercent": 58,
+        "scalePercent": 42
+      },
+      "light": {
+        "xPercent": 50,
+        "yPercent": 45,
+        "scalePercent": 92
+      }
+    },
+    "deskNow": {
+      "background": {
+        "xPercent": 50,
+        "yPercent": 50,
+        "scalePercent": 100
+      },
+      "computer": {
+        "xPercent": 52,
+        "yPercent": 58,
+        "scalePercent": 42
+      }
+    }
+  }

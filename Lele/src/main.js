@@ -1,16 +1,23 @@
-import { Start } from './scenes/Start.js';
+import { NightBedroomScene } from './scenes/NightBedroomScene.js';
+import { DeskNowScene } from './scenes/DeskNowScene.js';
+import { MemoryBedroomScene } from './scenes/MemoryBedroomScene.js';
+import { DeskPastScene } from './scenes/DeskPastScene.js';
 
 const config = {
     type: Phaser.AUTO,
-    title: 'Overlord Rising',
+    title: 'Memory Rewrite Demo 2.0',
     description: '',
     parent: 'game-container',
     width: 1280,
-    height: 720,
+    height: 960,
     backgroundColor: '#000000',
     pixelArt: false,
+    roundPixels: true,
     scene: [
-        Start
+        NightBedroomScene,
+        DeskNowScene,
+        MemoryBedroomScene,
+        DeskPastScene
     ],
     scale: {
         mode: Phaser.Scale.FIT,

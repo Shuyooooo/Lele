@@ -1,0 +1,38 @@
+{
+  "nightBedroom": {
+    "deskHotzone": {
+      "xPercent": 53,
+      "yPercent": 60,
+      "scaleXPercent": 100,
+      "scaleYPercent": 100
+    }
+  },
+  "deskNow": {
+    "computerHotzone": {
+      "xPercent": 52,
+      "yPercent": 58,
+      "scaleXPercent": 42,
+      "scaleYPercent": 42
+    },
+    "textHotzone1": {
+      "xPercent": 30,
+      "yPercent": 25,
+      "scaleXPercent": 100,
+      "scaleYPercent": 100
+    },
+    "textHotzone2": {
+      "xPercent": 42,
+      "yPercent": 25,
+      "scaleXPercent": 100,
+      "scaleYPercent": 100
+    }
+  },
+  "memoryBedroom": {
+    "deskHotzone": {
+      "xPercent": 53,
+      "yPercent": 60,
+      "scaleXPercent": 100,
+      "scaleYPercent": 100
+    }
+  }
+}

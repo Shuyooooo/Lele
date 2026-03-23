@@ -1,0 +1,37 @@
+---
+description: Global brace and block style conventions for this project
+alwaysApply: true
+---
+
+# Brace and Block Style
+
+- 函数、方法、类、条件、循环等代码块的左大括号 **单独成行**，使用 Allman 风格。
+- 空函数/空方法可以在一行内写完（可选），非空代码块一律换行。
+
+示例（JavaScript / Phaser 场景）：
+
+```javascript
+export class Test extends Phaser.Scene
+{
+    constructor()
+    {
+        super('Test');
+    }
+
+    init() {}
+
+    create()
+    {
+        if (condition)
+        {
+            // code
+        }
+
+        for (let i = 0; i < 10; i++)
+        {
+            // code
+        }
+    }
+}
+```
+
