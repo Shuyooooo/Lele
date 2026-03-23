@@ -112,11 +112,6 @@ export class MemoryBedroomScene extends Phaser.Scene
         img.setScale(s);
     }
 
-    getHotzonesStorageKey()
-    {
-        return 'hotzones';
-    }
-
     getHotzonesDefaultUrl()
     {
         return new URL('../../hotzones.json', import.meta.url).href;
@@ -124,20 +119,6 @@ export class MemoryBedroomScene extends Phaser.Scene
 
     async loadHotzonesConfig()
     {
-        const key = this.getHotzonesStorageKey();
-        const saved = localStorage.getItem(key);
-        if (saved)
-        {
-            try
-            {
-                return JSON.parse(saved);
-            }
-            catch (e)
-            {
-                // ignore
-            }
-        }
-
         const resp = await fetch(this.getHotzonesDefaultUrl(), { cache: 'no-store' });
         return await resp.json();
     }
@@ -223,8 +204,6 @@ export class MemoryBedroomScene extends Phaser.Scene
             scaleXPercent: this.lightZone.scaleX * 100,
             scaleYPercent: this.lightZone.scaleY * 100
         } : null;
-
-        localStorage.setItem(this.getHotzonesStorageKey(), JSON.stringify(data));
 
         const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], { type: 'application/json' });

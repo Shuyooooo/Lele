@@ -164,11 +164,6 @@ export class DeskNowLightOffScene extends Phaser.Scene
         });
     }
 
-    getHotzonesStorageKey()
-    {
-        return 'hotzones';
-    }
-
     getHotzonesDefaultUrl()
     {
         return new URL('../../hotzones.json', import.meta.url).href;
@@ -176,20 +171,6 @@ export class DeskNowLightOffScene extends Phaser.Scene
 
     async loadHotzonesConfig()
     {
-        const key = this.getHotzonesStorageKey();
-        const saved = localStorage.getItem(key);
-        if (saved)
-        {
-            try
-            {
-                return JSON.parse(saved);
-            }
-            catch (e)
-            {
-                // ignore
-            }
-        }
-
         const resp = await fetch(this.getHotzonesDefaultUrl(), { cache: 'no-store' });
         return await resp.json();
     }
@@ -256,8 +237,6 @@ export class DeskNowLightOffScene extends Phaser.Scene
             scaleXPercent: this.powerOnHotzone.scaleX * 100,
             scaleYPercent: this.powerOnHotzone.scaleY * 100
         };
-        localStorage.setItem(this.getHotzonesStorageKey(), JSON.stringify(data));
-
         const json = JSON.stringify(data, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
