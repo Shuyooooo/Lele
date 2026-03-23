@@ -1074,11 +1074,21 @@ export class DeskNowScene extends Phaser.Scene
 
         this.isTransitioning = true;
         const cam = this.cameras.main;
-        cam.fadeOut(240, 0, 0, 0);
-        this.time.delayedCall(260, () =>
+        let executed = false;
+        const runActionOnce = () =>
         {
+            if (executed)
+            {
+                return;
+            }
+            executed = true;
             action();
-        });
+        };
+
+        cam.once('camerafadeoutcomplete', runActionOnce);
+        cam.fadeOut(240, 0, 0, 0);
+        // fallback: prevent rare timer/camera event race from leaving a black screen
+        this.time.delayedCall(320, runActionOnce);
     }
 
     showReturnToast()
