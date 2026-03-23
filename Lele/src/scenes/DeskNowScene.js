@@ -1,6 +1,6 @@
 /**
  * Memory Rewrite Demo 2.0 — Desk 子场景
- * 负责：电脑输入验证（Present）与写入后四位（Past）
+ * 负责：电脑输入验证（固定 1867）与过去线索查看
  */
 
 import { LayoutManager } from '../utils/LayoutManager.js';
@@ -15,7 +15,7 @@ export class DeskNowScene extends Phaser.Scene
 
     preload()
     {
-        this.load.image('desk_bg', 'assets/NightBedroom/sub_scenes/desk_now.png');
+        this.load.image('desk_bg', 'assets/NightBedroom/sub_scenes/desk_now_lighton.png');
         this.load.image('dn_text_1', 'assets/NightBedroom/sub_scenes/text_1.png');
         this.load.image('dn_text_2', 'assets/NightBedroom/sub_scenes/text_2.png');
     }
@@ -23,9 +23,13 @@ export class DeskNowScene extends Phaser.Scene
     create()
     {
         this.memory = this.registry.get('memory') || {
-            tail4: '',
-            unlocked: false
+            unlocked: false,
+            powerOn: true
         };
+        if (typeof this.memory.powerOn !== 'boolean')
+        {
+            this.memory.powerOn = true;
+        }
         this.registry.set('memory', this.memory);
 
         this.mode = 'present';
@@ -46,8 +50,10 @@ export class DeskNowScene extends Phaser.Scene
         this.hotzonesConfig = null;
         this.textHotzone1 = null;
         this.textHotzone2 = null;
+        this.powerOffHotzone = null;
         this.textModal1 = null;
         this.textModal2 = null;
+        this.isTransitioning = false;
 
         const w = this.scale.width;
         const h = this.scale.height;
@@ -63,14 +69,15 @@ export class DeskNowScene extends Phaser.Scene
             w * 0.95,
             h * 0.95,
             0xffecd2,
-            this.memory.unlocked ? 0.72 : 0.18
+            0.001
         );
-        this.lightSprite.setBlendMode(Phaser.BlendModes.SCREEN);
+        // 光源仅作为穿越热区，不再提供可见发光效果
         this.lightSprite.name = 'light';
-        this.lightSprite.setInteractive({ useHandCursor: false });
+        this.lightSprite.setInteractive({ useHandCursor: true });
 
         this.coldOverlay = this.add.rectangle(w * 0.5, h * 0.5, w, h, 0x1a2844, this.memory.unlocked ? 0.12 : 0.45);
         this.coldOverlay.setDepth(1);
+        this.enforceBaseLayerOrder();
 
         this.buildHintLine();
 
@@ -94,7 +101,7 @@ export class DeskNowScene extends Phaser.Scene
             w * 0.08,
             h * 0.06,
             0x9ca3af,
-            0.08
+            0.001
         );
         this.textHotzone1.setDepth(3);
         this.textHotzone1.setInteractive({ useHandCursor: true });
@@ -106,11 +113,23 @@ export class DeskNowScene extends Phaser.Scene
             w * 0.08,
             h * 0.06,
             0x9ca3af,
-            0.08
+            0.001
         );
         this.textHotzone2.setDepth(3);
         this.textHotzone2.setInteractive({ useHandCursor: true });
         this.textHotzone2.name = 'textHotzone2';
+
+        this.powerOffHotzone = this.add.rectangle(
+            w * 0.1,
+            h * 0.08,
+            w * 0.08,
+            h * 0.08,
+            0xfbbf24,
+            0.001
+        );
+        this.powerOffHotzone.setDepth(3);
+        this.powerOffHotzone.setInteractive({ useHandCursor: true });
+        this.powerOffHotzone.name = 'powerOffHotzone';
 
         this._layoutManager = new LayoutManager(this);
         this._debugManager = new DebugManager(this, this._layoutManager, {
@@ -125,10 +144,11 @@ export class DeskNowScene extends Phaser.Scene
             }
         });
         this._debugManager.registerEditableObject(this.bgImage, { useHandCursor: false, pixelPerfect: false });
-        this._debugManager.registerEditableObject(this.lightSprite, { useHandCursor: false, pixelPerfect: false });
+        this._debugManager.registerEditableObject(this.lightSprite, { useHandCursor: true, pixelPerfect: false });
         this._debugManager.registerEditableObject(comp, { useHandCursor: true });
         this._debugManager.registerEditableObject(this.textHotzone1, { useHandCursor: true, pixelPerfect: false });
         this._debugManager.registerEditableObject(this.textHotzone2, { useHandCursor: true, pixelPerfect: false });
+        this._debugManager.registerEditableObject(this.powerOffHotzone, { useHandCursor: true, pixelPerfect: false });
         this._debugManager.ready.then(() =>
         {
             this._debugManager.applyConfig();
@@ -141,8 +161,24 @@ export class DeskNowScene extends Phaser.Scene
             {
                 return;
             }
+            if (!this.isPuzzleEnabled())
+            {
+                return;
+            }
 
             this.openComputerModal();
+        });
+        this.lightSprite.on('pointerdown', () =>
+        {
+            if (this._debugManager && this._debugManager.debugMode)
+            {
+                return;
+            }
+            if (this.computerModal)
+            {
+                return;
+            }
+            this.gotoPast();
         });
 
         this.textHotzone1.on('pointerdown', () =>
@@ -151,20 +187,12 @@ export class DeskNowScene extends Phaser.Scene
             {
                 return;
             }
-
-            this.openTextModal(1);
-        });
-        this.textHotzone1.on('pointerover', () =>
-        {
-            if (this._debugManager && this._debugManager.debugMode)
+            if (!this.isPuzzleEnabled())
             {
                 return;
             }
-            this.textHotzone1.setFillStyle(0x9ca3af, 0.16);
-        });
-        this.textHotzone1.on('pointerout', () =>
-        {
-            this.textHotzone1.setFillStyle(0x9ca3af, 0.08);
+
+            this.openTextModal(1);
         });
 
         this.textHotzone2.on('pointerdown', () =>
@@ -173,23 +201,21 @@ export class DeskNowScene extends Phaser.Scene
             {
                 return;
             }
+            if (!this.isPuzzleEnabled())
+            {
+                return;
+            }
 
             this.openTextModal(2);
         });
-        this.textHotzone2.on('pointerover', () =>
+        this.powerOffHotzone.on('pointerdown', () =>
         {
             if (this._debugManager && this._debugManager.debugMode)
             {
                 return;
             }
-            this.textHotzone2.setFillStyle(0x9ca3af, 0.16);
+            this.turnPowerOff();
         });
-        this.textHotzone2.on('pointerout', () =>
-        {
-            this.textHotzone2.setFillStyle(0x9ca3af, 0.08);
-        });
-
-        this.buildReturnArrow();
 
         this._keyDownHandler = (evt) =>
         {
@@ -198,6 +224,7 @@ export class DeskNowScene extends Phaser.Scene
         this.input.keyboard.on('keydown', this._keyDownHandler);
 
         this.events.on('shutdown', this.onShutdown, this);
+        this.cameras.main.fadeIn(220, 0, 0, 0);
 
         if (this.memory.unlocked)
         {
@@ -277,6 +304,13 @@ export class DeskNowScene extends Phaser.Scene
             this.applyZoneConfigFromPercents(this.computerHotzone, deskNow.computerHotzone, rect);
         }
 
+        const lightCfg = deskNow.lightHotzone || deskNow.light;
+        if (lightCfg && this.lightSprite)
+        {
+            const rect = { x: 0, y: 0, width: this.scale.width, height: this.scale.height };
+            this.applyZoneConfigFromPercents(this.lightSprite, lightCfg, rect);
+        }
+
         if (deskNow.textHotzone1 && this.textHotzone1)
         {
             const rect = { x: 0, y: 0, width: this.scale.width, height: this.scale.height };
@@ -287,6 +321,12 @@ export class DeskNowScene extends Phaser.Scene
         {
             const rect = { x: 0, y: 0, width: this.scale.width, height: this.scale.height };
             this.applyZoneConfigFromPercents(this.textHotzone2, deskNow.textHotzone2, rect);
+        }
+
+        if (deskNow.powerOffHotzone && this.powerOffHotzone)
+        {
+            const rect = { x: 0, y: 0, width: this.scale.width, height: this.scale.height };
+            this.applyZoneConfigFromPercents(this.powerOffHotzone, deskNow.powerOffHotzone, rect);
         }
     }
 
@@ -328,8 +368,10 @@ export class DeskNowScene extends Phaser.Scene
         const data = await this.loadHotzonesConfig();
         data.deskNow = data.deskNow || {};
         data.deskNow.computerHotzone = zoneToConfig(this.computerHotzone);
+        data.deskNow.lightHotzone = this.lightSprite ? zoneToConfig(this.lightSprite) : null;
         data.deskNow.textHotzone1 = this.textHotzone1 ? zoneToConfig(this.textHotzone1) : null;
         data.deskNow.textHotzone2 = this.textHotzone2 ? zoneToConfig(this.textHotzone2) : null;
+        data.deskNow.powerOffHotzone = this.powerOffHotzone ? zoneToConfig(this.powerOffHotzone) : null;
 
         localStorage.setItem(this.getHotzonesStorageKey(), JSON.stringify(data));
 
@@ -349,6 +391,23 @@ export class DeskNowScene extends Phaser.Scene
     {
         const s = Math.min(mw / img.width, mh / img.height);
         img.setScale(s);
+    }
+
+    enforceBaseLayerOrder()
+    {
+        if (this.bgImage)
+        {
+            this.bgImage.setDepth(0);
+        }
+        if (this.lightSprite)
+        {
+            // 固定灯光层在背景之上、遮罩之下，避免切场景后漂到最上层
+            this.lightSprite.setDepth(0.5);
+        }
+        if (this.coldOverlay)
+        {
+            this.coldOverlay.setDepth(1);
+        }
     }
 
     buildStickyNote()
@@ -371,7 +430,7 @@ export class DeskNowScene extends Phaser.Scene
             color: '#5c4a3a'
         }).setOrigin(0.5).setDepth(4);
 
-        this.add.text(nx, ny - 2, '我记得是', {
+        this.add.text(nx, ny - 2, '线索指向', {
             fontFamily: 'monospace',
             fontSize: '28px',
             color: '#2a1810',
@@ -398,50 +457,16 @@ export class DeskNowScene extends Phaser.Scene
 
     buildHintLine()
     {
-        const w = this.scale.width;
-        const h = this.scale.height;
-        this.hintText = this.add.text(w * 0.5, h * 0.94, '点击电脑打开界面  ·  键盘输入密码', {
-            fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
-            fontSize: '14px',
-            color: '#aabbdd'
-        }).setOrigin(0.5).setDepth(5).setAlpha(0.85);
-    }
-
-    buildReturnArrow()
-    {
-        const w = this.scale.width;
-        const h = this.scale.height;
-
-        const g = this.add.graphics();
-        g.setDepth(50);
-        g.fillStyle(0xdbeafe, 0.9);
-        g.lineStyle(2, 0x60a5fa, 1);
-
-        const cx = w * 0.5;
-        const y = h * 0.92;
-        const size = 14;
-
-        g.beginPath();
-        g.moveTo(cx - size, y - size * 0.65);
-        g.lineTo(cx + size, y);
-        g.lineTo(cx - size, y + size * 0.65);
-        g.closePath();
-        g.fillPath();
-        g.strokePath();
-
-        const zone = this.add.zone(cx, y, size * 3, size * 3);
-        zone.setDepth(51);
-        zone.setInteractive({ useHandCursor: true });
-        zone.on('pointerdown', () =>
-        {
-            this.scene.stop('DeskNow');
-            this.scene.resume('NightBedroom');
-        });
+        this.hintText = null;
     }
 
     openComputerModal()
     {
         if (this.mode !== 'present')
+        {
+            return;
+        }
+        if (!this.isPuzzleEnabled())
         {
             return;
         }
@@ -457,6 +482,11 @@ export class DeskNowScene extends Phaser.Scene
 
         const panel = this.add.rectangle(0, 0, w * 0.72, h * 0.62, 0x0d1118, 0.94);
         panel.setStrokeStyle(2, 0x3d5a80);
+        panel.setInteractive({ useHandCursor: false });
+        panel.on('pointerdown', () =>
+        {
+            // 捕获点击，避免点穿到底层灯泡热区
+        });
         c.add(panel);
         const closeBtn = this.add.text(panel.width * 0.5 - 26, -panel.height * 0.5 + 24, 'x', {
             fontFamily: 'Arial, sans-serif',
@@ -478,7 +508,7 @@ export class DeskNowScene extends Phaser.Scene
             return;
         }
 
-        const title = this.add.text(0, -h * 0.22, '终端锁定 · 需要 4 位密码', {
+        const title = this.add.text(0, -h * 0.22, '终端锁定 · 请输入 4 位密码', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '22px',
             color: '#e8eef8'
@@ -500,14 +530,7 @@ export class DeskNowScene extends Phaser.Scene
         }).setOrigin(0.5);
         c.add(msg);
 
-        const btnThink = this.makeButton(0, h * 0.16, '○ 回忆（进入过去）', () =>
-        {
-            this.closeComputerModal();
-            this.gotoPast();
-        });
-        c.add(btnThink);
-
-        const btnLogin = this.makeButton(0, h * 0.24, '登录', () =>
+        const btnLogin = this.makeButton(0, h * 0.20, '登录', () =>
         {
             this.tryUnlockPresent();
         });
@@ -531,7 +554,7 @@ export class DeskNowScene extends Phaser.Scene
         }).setOrigin(0.5);
         c.add(title);
 
-        const body = this.add.text(0, h * 0.02, '本地会话已验证。\\n灯光与备忘已按你的记忆更新。', {
+        const body = this.add.text(0, h * 0.02, '本地会话已验证。\当前终端已解锁。', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '16px',
             color: '#c8e6d8',
@@ -715,6 +738,10 @@ export class DeskNowScene extends Phaser.Scene
 
         if (this.mode === 'present' && this.computerModal && !this.memory.unlocked)
         {
+            if (!this.isPuzzleEnabled())
+            {
+                return;
+            }
             this.handlePresentKeys(k);
             return;
         }
@@ -783,7 +810,11 @@ export class DeskNowScene extends Phaser.Scene
 
     tryUnlockPresent()
     {
-        const need = this.memory.tail4 || '';
+        if (!this.isPuzzleEnabled())
+        {
+            return;
+        }
+        const need = '1867';
 
         if (this.presentBuffer.length !== 4)
         {
@@ -795,7 +826,7 @@ export class DeskNowScene extends Phaser.Scene
             return;
         }
 
-        const ok = need.length === 4 && this.presentBuffer === need;
+        const ok = this.presentBuffer === need;
 
         if (ok)
         {
@@ -816,7 +847,7 @@ export class DeskNowScene extends Phaser.Scene
         {
             if (this.modalMsg)
             {
-                this.modalMsg.setText('验证失败 · 你的记忆不一致');
+                this.modalMsg.setText('验证失败 · 密码错误');
                 this.modalMsg.setColor('#ff8888');
             }
             this.shakeModal();
@@ -853,12 +884,7 @@ export class DeskNowScene extends Phaser.Scene
 
     applyUnlockedLook()
     {
-        this.tweens.add({
-            targets: this.lightSprite,
-            alpha: 0.72,
-            duration: 900,
-            ease: 'Sine.easeOut'
-        });
+        this.enforceBaseLayerOrder();
         this.tweens.add({
             targets: this.coldOverlay,
             alpha: 0.08,
@@ -882,14 +908,13 @@ export class DeskNowScene extends Phaser.Scene
 
     gotoPast()
     {
-        this.closeComputerModal();
-
-        const cam = this.cameras.main;
-        cam.fadeOut(240, 0, 0, 0);
-        this.time.delayedCall(260, () =>
+        if (!this.isPuzzleEnabled())
         {
-            cam.fadeIn(240, 0, 0, 0);
-
+            return;
+        }
+        this.closeComputerModal();
+        this.transitionWithFade(() =>
+        {
             this.scene.stop('DeskNow');
             this.scene.launch('MemoryBedroom');
         });
@@ -917,7 +942,7 @@ export class DeskNowScene extends Phaser.Scene
         bubble.fillTriangle(-40, bh * 0.5, 40, bh * 0.5, 0, bh * 0.5 + 36);
         c.add(bubble);
 
-        const title = this.add.text(0, -bh * 0.32, '写下一段会留在记忆里的记录', {
+        const title = this.add.text(0, -bh * 0.32, '输入一段过去线索', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '17px',
             color: '#334155'
@@ -1006,9 +1031,6 @@ export class DeskNowScene extends Phaser.Scene
             return;
         }
 
-        this.memory.tail4 = this.pastBuffer;
-        this.registry.set('memory', this.memory);
-
         const cam = this.cameras.main;
         cam.fadeOut(260, 0, 0, 0);
         this.time.delayedCall(280, () =>
@@ -1041,15 +1063,42 @@ export class DeskNowScene extends Phaser.Scene
                 }
             });
 
-            this.tweens.add({
-                targets: this.lightSprite,
-                alpha: this.memory.unlocked ? 0.72 : 0.18,
-                duration: 250,
-                ease: 'Sine.easeOut'
-            });
-
             cam.fadeIn(300, 0, 0, 0);
             this.showReturnToast();
+        });
+    }
+
+    isPuzzleEnabled()
+    {
+        return this.memory?.powerOn === true;
+    }
+
+    turnPowerOff()
+    {
+        this.closeComputerModal();
+        this.closeTextModal();
+        this.memory.powerOn = false;
+        this.registry.set('memory', this.memory);
+        this.transitionWithFade(() =>
+        {
+            this.scene.stop('DeskNow');
+            this.scene.launch('DeskNowLightOff');
+        });
+    }
+
+    transitionWithFade(action)
+    {
+        if (this.isTransitioning)
+        {
+            return;
+        }
+
+        this.isTransitioning = true;
+        const cam = this.cameras.main;
+        cam.fadeOut(240, 0, 0, 0);
+        this.time.delayedCall(260, () =>
+        {
+            action();
         });
     }
 
@@ -1058,7 +1107,7 @@ export class DeskNowScene extends Phaser.Scene
         const w = this.scale.width;
         const h = this.scale.height;
 
-        const t = this.add.text(w * 0.5, h * 0.12, '已回到现在 · 4位不会回显，请凭记忆输入电脑', {
+        const t = this.add.text(w * 0.5, h * 0.12, '已回到现在 · 请输入正确 4 位密码', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '15px',
             color: '#e0e8ff',

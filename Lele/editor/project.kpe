@@ -1,0 +1,179 @@
+{
+  "scenes": [
+    {
+      "name": "scene_UbEJaW2f",
+      "key": "scene_UbEJaW2f",
+      "backgroundColor": "#999999",
+      "useBackgroundColor": false,
+      "active": false,
+      "bounds": false,
+      "objects": [
+        {
+          "name": "image_o5sJQCbj",
+          "type": "image",
+          "x": 622,
+          "y": 344,
+          "scrollFactorX": 1,
+          "scrollFactorY": 1,
+          "parent": "",
+          "isLocked": false,
+          "texture": "asset_1QAWjBhD",
+          "frame": "",
+          "alpha": 1,
+          "depth": 0,
+          "scaleX": 1,
+          "scaleY": 1,
+          "originX": 0.5,
+          "originY": 0.5,
+          "angle": 0,
+          "flipX": false,
+          "flipY": false,
+          "visible": true,
+          "blendMode": 0,
+          "interactive": true,
+          "isPhysics": false,
+          "config": {
+            "isStatic": false,
+            "friction": 0.1,
+            "restitution": 0,
+            "frictionStatic": 0.5,
+            "density": 0.001,
+            "isSensor": false,
+            "slop": 0.05,
+            "ignoreGravity": false,
+            "frictionAir": 0.01,
+            "damping": 0,
+            "angularDamping": 0,
+            "sleepThreshold": 60,
+            "shape": {
+              "type": "rectangle",
+              "width": 32,
+              "height": 32,
+              "radius": 16,
+              "sides": 5,
+              "slope": 0.5,
+              "verts": []
+            },
+            "collisionFilter": {
+              "group": 0,
+              "category": 1,
+              "mask": 4294967295
+            }
+          }
+        },
+        {
+          "name": "rectangle_ppqApILR",
+          "type": "rectangle",
+          "x": 335,
+          "y": 112,
+          "scrollFactorX": 1,
+          "scrollFactorY": 1,
+          "parent": "",
+          "isLocked": false,
+          "width": 100,
+          "height": 100,
+          "fillColor": 65280,
+          "fillAlpha": 1,
+          "strokeColor": 0,
+          "strokeThickness": 2,
+          "alpha": 1,
+          "depth": 0,
+          "scaleX": 1,
+          "scaleY": 1,
+          "originX": 0.5,
+          "originY": 0.5,
+          "angle": 0,
+          "visible": true,
+          "blendMode": 0,
+          "interactive": true
+        }
+      ],
+      "scripts": {
+        "init": "",
+        "preload": "",
+        "create": "",
+        "update": "",
+        "custom": ""
+      }
+    },
+    {
+      "name": "scene_oky6nofd",
+      "key": "scene_oky6nofd",
+      "backgroundColor": "#999999",
+      "useBackgroundColor": false,
+      "active": false,
+      "bounds": false,
+      "objects": [],
+      "scripts": {
+        "init": "",
+        "preload": "",
+        "create": "",
+        "update": "",
+        "custom": ""
+      }
+    }
+  ],
+  "assets": [],
+  "files": [
+    {
+      "name": "NightBedroomScene.js",
+      "type": "application/javascript",
+      "size": 23750,
+      "mtime": 1774261021854.362
+    },
+    {
+      "name": "bg.png",
+      "type": "image/png",
+      "size": 477110,
+      "mtime": 1773977810388.7578
+    }
+  ],
+  "config": {
+    "type": 0,
+    "backgroundColor": "#777777",
+    "transparent": false,
+    "antialias": true,
+    "disableContextMenu": true,
+    "scale": {
+      "mode": 3,
+      "autoCenter": 1,
+      "width": 1280,
+      "height": 960
+    },
+    "input": {
+      "keyboard": true,
+      "mouse": true,
+      "touch": true,
+      "gamepad": false,
+      "activePointers": 1
+    },
+    "audio": {
+      "noAudio": false,
+      "disableWebAudio": false
+    },
+    "pixelArt": false,
+    "physics": {
+      "default": "matter",
+      "matter": {
+        "gravity": {
+          "x": 0,
+          "y": 1
+        },
+        "debug": false,
+        "enableSleeping": false
+      }
+    },
+    "scene": [
+      "scene_UbEJaW2f",
+      "scene_oky6nofd"
+    ]
+  },
+  "params": {
+    "showProgress": false,
+    "progressPosition": "center",
+    "splashScreen": "",
+    "favicon": "",
+    "projectScript": "NightBedroomScene.js",
+    "htmlTemplate": ""
+  }
+}

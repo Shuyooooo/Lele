@@ -1,6 +1,6 @@
 /**
  * Memory Rewrite Demo 2.0 — desk_past 子场景
- * 负责：输入后四位（4位数字）并保存到 memory.tail4
+ * 负责：展示过去输入体验（不再修改密码状态）
  */
 
 export class DeskPastScene extends Phaser.Scene
@@ -17,7 +17,7 @@ export class DeskPastScene extends Phaser.Scene
 
     create()
     {
-        this.memory = this.registry.get('memory') || { tail4: '', unlocked: false };
+        this.memory = this.registry.get('memory') || { unlocked: false };
         this.registry.set('memory', this.memory);
 
         this.mode = 'past';
@@ -28,6 +28,7 @@ export class DeskPastScene extends Phaser.Scene
         this.pastSlots = null;
 
         this.messageText = null;
+        this.isTransitioning = false;
 
         const w = this.scale.width;
         const h = this.scale.height;
@@ -52,6 +53,7 @@ export class DeskPastScene extends Phaser.Scene
         this.input.keyboard.on('keydown', this._keyDownHandler);
 
         this.events.on('shutdown', this.onShutdown, this);
+        this.cameras.main.fadeIn(220, 0, 0, 0);
     }
 
     onShutdown()
@@ -88,7 +90,7 @@ export class DeskPastScene extends Phaser.Scene
         bubble.fillTriangle(-40, bh * 0.5, 40, bh * 0.5, 0, bh * 0.5 + 36);
         c.add(bubble);
 
-        const title = this.add.text(0, -bh * 0.32, '写下一段会留在记忆里的记录', {
+        const title = this.add.text(0, -bh * 0.32, '输入一段过去线索', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '17px',
             color: '#334155'
@@ -111,7 +113,7 @@ export class DeskPastScene extends Phaser.Scene
         c.add(slots);
         this.pastSlots = slots;
 
-        const tip = this.add.text(0, bh * 0.22, '输入数字 · Enter重置（或点击重置按钮）', {
+        const tip = this.add.text(0, bh * 0.22, '输入数字 · Enter确认（或点击确认按钮）', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '12px',
             color: '#94a3b8'
@@ -140,7 +142,7 @@ export class DeskPastScene extends Phaser.Scene
             color: '#93c5fd'
         }).setOrigin(0.5).setDepth(40);
 
-        const btn = this.add.text(w * 0.5, h * 0.78, '重置', {
+        const btn = this.add.text(w * 0.5, h * 0.78, '确认', {
             fontFamily: 'Arial, "Microsoft YaHei", sans-serif',
             fontSize: '18px',
             color: '#dde8ff',
@@ -189,8 +191,11 @@ export class DeskPastScene extends Phaser.Scene
         zone.setInteractive({ useHandCursor: true });
         zone.on('pointerdown', () =>
         {
-            this.scene.stop('DeskPast');
-            this.scene.resume('MemoryBedroom');
+            this.transitionWithFade(() =>
+            {
+                this.scene.stop('DeskPast');
+                this.scene.resume('MemoryBedroom');
+            });
         });
     }
 
@@ -207,7 +212,7 @@ export class DeskPastScene extends Phaser.Scene
             }
             if (this.messageText)
             {
-                this.messageText.setText('已清空 · 输入后按 Enter 重置');
+                this.messageText.setText('已清空 · 输入后按 Enter 确认');
                 this.messageText.setColor('#93c5fd');
             }
             return;
@@ -256,14 +261,9 @@ export class DeskPastScene extends Phaser.Scene
             return;
         }
 
-        // 过去重置了“记忆记录”，未来需要重新验证，所以主动锁回去。
-        this.memory.unlocked = false;
-        this.memory.tail4 = this.pastBuffer;
-        this.registry.set('memory', this.memory);
-
         if (this.messageText)
         {
-            this.messageText.setText('已重置到记忆记录');
+            this.messageText.setText('已确认输入');
             this.messageText.setColor('#a7f3d0');
         }
 
@@ -271,8 +271,11 @@ export class DeskPastScene extends Phaser.Scene
 
         this.time.delayedCall(420, () =>
         {
-            this.scene.stop('DeskPast');
-            this.scene.resume('MemoryBedroom');
+            this.transitionWithFade(() =>
+            {
+                this.scene.stop('DeskPast');
+                this.scene.resume('MemoryBedroom');
+            });
         });
     }
 
@@ -306,6 +309,22 @@ export class DeskPastScene extends Phaser.Scene
             duration: 140,
             yoyo: true,
             ease: 'Sine.easeOut'
+        });
+    }
+
+    transitionWithFade(action)
+    {
+        if (this.isTransitioning)
+        {
+            return;
+        }
+
+        this.isTransitioning = true;
+        const cam = this.cameras.main;
+        cam.fadeOut(240, 0, 0, 0);
+        this.time.delayedCall(260, () =>
+        {
+            action();
         });
     }
 }

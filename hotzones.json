@@ -31,14 +31,40 @@
       "yPercent": 20.729166666666668,
       "scaleXPercent": 124.00000000000003,
       "scaleYPercent": 124.00000000000003
+    },
+    "powerOffHotzone": {
+      "xPercent": 17.96875,
+      "yPercent": 68.20833333333333,
+      "scaleXPercent": 37.99999999999994,
+      "scaleYPercent": 37.99999999999994
+    },
+    "lightHotzone": {
+      "xPercent": 28.828125,
+      "yPercent": 31.874999999999996,
+      "scaleXPercent": 6.999999999999925,
+      "scaleYPercent": 6.999999999999925
     }
   },
   "memoryBedroom": {
     "deskHotzone": {
-      "xPercent": 79.71875,
-      "yPercent": 55.41666666666667,
-      "scaleXPercent": 36.99999999999994,
-      "scaleYPercent": 36.99999999999994
+      "xPercent": 74.32812500000001,
+      "yPercent": 42.291666666666664,
+      "scaleXPercent": 54.99999999999996,
+      "scaleYPercent": 54.99999999999996
+    },
+    "lightHotzone": {
+      "xPercent": 31.328125,
+      "yPercent": 13.520833333333334,
+      "scaleXPercent": 38.99999999999994,
+      "scaleYPercent": 38.99999999999994
+    }
+  },
+  "deskNowLightOff": {
+    "powerOnHotzone": {
+      "xPercent": 18.203125,
+      "yPercent": 68.22916666666666,
+      "scaleXPercent": -3.0000000000000746,
+      "scaleYPercent": -3.0000000000000746
     }
   }
 }

@@ -1,0 +1,7 @@
+{
+  "skip": ["node_modules/", "dist/"],
+  "settings": {
+    "phasereditor2d.scene.enablePixelArt": false
+  },
+  "playUrl": "http://localhost:5173"
+}

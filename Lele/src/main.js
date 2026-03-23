@@ -1,4 +1,4 @@
-import { NightBedroomScene } from './scenes/NightBedroomScene.js';
+import { DeskNowLightOffScene } from './scenes/DeskNowLightOffScene.js';
 import { DeskNowScene } from './scenes/DeskNowScene.js';
 import { MemoryBedroomScene } from './scenes/MemoryBedroomScene.js';
 import { DeskPastScene } from './scenes/DeskPastScene.js';
@@ -14,7 +14,7 @@ const config = {
     pixelArt: false,
     roundPixels: true,
     scene: [
-        NightBedroomScene,
+        DeskNowLightOffScene,
         DeskNowScene,
         MemoryBedroomScene,
         DeskPastScene

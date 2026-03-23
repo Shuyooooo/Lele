@@ -16,7 +16,7 @@ export class NightBedroomScene extends Phaser.Scene
     preload()
     {
         this.load.image('nb_bg', 'assets/NightBedroom/bg.png');
-        this.load.image('nb_desk_past', 'assets/NightBedroom/sub_scenes/desk_now.png');
+        this.load.image('nb_desk_past', 'assets/NightBedroom/sub_scenes/desk_now_lighton.png');
     }
 
     create()
@@ -55,12 +55,8 @@ export class NightBedroomScene extends Phaser.Scene
         this.bgImage.name = 'background';
         this.bgImage.setInteractive({ useHandCursor: false });
 
-        // 用矩形替代“lamp”贴图，便于热区编辑/不再依赖图片资源
-        this.lightSprite = this.add.rectangle(this.playCenterX, h * 0.45, this.playArea.width * 0.92, this.playArea.height * 0.92, 0xffecd2, 1);
-        this.lightSprite.setBlendMode(Phaser.BlendModes.SCREEN);
-        this.lightSprite.setAlpha(this.memory.unlocked ? 0.72 : 0.18);
-        this.lightSprite.name = 'light';
-        this.lightSprite.setInteractive({ useHandCursor: false });
+        // Night 场景不再叠加额外灯光层，避免影响原图观感
+        this.lightSprite = null;
 
         if (this.memory.unlocked)
         {
@@ -630,12 +626,15 @@ export class NightBedroomScene extends Phaser.Scene
 
     applyUnlockedLook()
     {
-        this.tweens.add({
-            targets: this.lightSprite,
-            alpha: 0.72,
-            duration: 900,
-            ease: 'Sine.easeOut'
-        });
+        if (this.lightSprite)
+        {
+            this.tweens.add({
+                targets: this.lightSprite,
+                alpha: 0.72,
+                duration: 900,
+                ease: 'Sine.easeOut'
+            });
+        }
         this.tweens.add({
             targets: this.coldOverlay,
             alpha: 0.08,
