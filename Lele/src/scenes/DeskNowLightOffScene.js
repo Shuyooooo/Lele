@@ -19,6 +19,10 @@ export class DeskNowLightOffScene extends Phaser.Scene
     {
         this.memory = this.registry.get('memory') || { unlocked: false, powerOn: false };
         this.memory.powerOn = false;
+        if (typeof this.memory.blockLightTravelUntil !== 'number')
+        {
+            this.memory.blockLightTravelUntil = 0;
+        }
         this.registry.set('memory', this.memory);
 
         const w = this.scale.width;
@@ -138,8 +142,14 @@ export class DeskNowLightOffScene extends Phaser.Scene
 
     turnPowerOn()
     {
+        if (this.isTransitioning)
+        {
+            return;
+        }
         this.closeTextModal();
         this.memory.powerOn = true;
+        // Avoid accidental chained click on DeskNow light hotzone right after switch.
+        this.memory.blockLightTravelUntil = this.time.now + 450;
         this.registry.set('memory', this.memory);
         this.transitionWithFade(() =>
         {

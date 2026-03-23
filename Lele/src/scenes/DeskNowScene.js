@@ -30,6 +30,10 @@ export class DeskNowScene extends Phaser.Scene
         {
             this.memory.powerOn = true;
         }
+        if (typeof this.memory.blockLightTravelUntil !== 'number')
+        {
+            this.memory.blockLightTravelUntil = 0;
+        }
         this.registry.set('memory', this.memory);
 
         this.mode = 'present';
@@ -171,6 +175,14 @@ export class DeskNowScene extends Phaser.Scene
         this.lightSprite.on('pointerdown', () =>
         {
             if (this._debugManager && this._debugManager.debugMode)
+            {
+                return;
+            }
+            if (this.isTransitioning)
+            {
+                return;
+            }
+            if (this.time.now < this.memory.blockLightTravelUntil)
             {
                 return;
             }
@@ -1054,9 +1066,14 @@ export class DeskNowScene extends Phaser.Scene
 
     turnPowerOff()
     {
+        if (this.isTransitioning)
+        {
+            return;
+        }
         this.closeComputerModal();
         this.closeTextModal();
         this.memory.powerOn = false;
+        this.memory.blockLightTravelUntil = this.time.now + 450;
         this.registry.set('memory', this.memory);
         this.transitionWithFade(() =>
         {
